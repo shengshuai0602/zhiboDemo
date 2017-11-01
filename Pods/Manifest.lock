@@ -1,0 +1,33 @@
+PODS:
+  - Bugly (2.4.2)
+  - IQKeyboardManager (4.0.7)
+  - KYBarrageKit (0.0.6)
+  - Masonry (1.0.2)
+  - MBProgressHUD (1.0.0)
+  - MJRefresh (3.1.12)
+  - RongCloudIMLib (2.7.3.1)
+  - SVProgressHUD (2.1.2)
+
+DEPENDENCIES:
+  - Bugly
+  - IQKeyboardManager
+  - KYBarrageKit
+  - Masonry (~> 1.0.2)
+  - MBProgressHUD (~> 1.0.0)
+  - MJRefresh
+  - RongCloudIMLib
+  - SVProgressHUD (~> 2.1.2)
+
+SPEC CHECKSUMS:
+  Bugly: b09cd3c7e54048a0e079be88a7a99610f14eab8f
+  IQKeyboardManager: 69002bb4fea60596b710e57d426abc00e5063630
+  KYBarrageKit: c2b6d97435620c3828a9786b44261f254fb9f977
+  Masonry: 7c429b56da9d4ee0bbb3ed77a5ea710d6a5df39e
+  MBProgressHUD: 4890f671c94e8a0f3cf959aa731e9de2f036d71a
+  MJRefresh: b96cdb21c4aa75a7b07654311ab2f315c497e806
+  RongCloudIMLib: f12607ef8e6d84e08e1411bed0fc4879383747b4
+  SVProgressHUD: c404a55d78acbeb7ebb78b76d3faf986475a6994
+
+PODFILE CHECKSUM: e52dd2af4de70285463ddd97efef8a5e5ecb6751
+
+COCOAPODS: 1.1.1
