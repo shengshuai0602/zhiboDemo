@@ -8,6 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		380529A01FA9C658005B8964 /* KongViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 3805299F1FA9C658005B8964 /* KongViewController.m */; };
+		3819E3731FAC0E1A00799D21 /* ClearFullView.m in Sources */ = {isa = PBXBuildFile; fileRef = 3819E3721FAC0E1A00799D21 /* ClearFullView.m */; };
+		3819E3761FAC5FB800799D21 /* DSCacheManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 3819E3751FAC5FB800799D21 /* DSCacheManager.m */; };
 		382C7E6F1F9D93B3001F2AB9 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 382C7E6E1F9D93B3001F2AB9 /* main.m */; };
 		382C7E721F9D93B3001F2AB9 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 382C7E711F9D93B3001F2AB9 /* AppDelegate.m */; };
 		382C7E7D1F9D93B3001F2AB9 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 382C7E7B1F9D93B3001F2AB9 /* LaunchScreen.storyboard */; };
@@ -66,6 +68,10 @@
 		1F5A947197267275D1574B33 /* libPods-ZhiBo.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-ZhiBo.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		3805299E1FA9C658005B8964 /* KongViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = KongViewController.h; sourceTree = "<group>"; };
 		3805299F1FA9C658005B8964 /* KongViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = KongViewController.m; sourceTree = "<group>"; };
+		3819E3711FAC0E1A00799D21 /* ClearFullView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ClearFullView.h; sourceTree = "<group>"; };
+		3819E3721FAC0E1A00799D21 /* ClearFullView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ClearFullView.m; sourceTree = "<group>"; };
+		3819E3741FAC5FB800799D21 /* DSCacheManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DSCacheManager.h; sourceTree = "<group>"; };
+		3819E3751FAC5FB800799D21 /* DSCacheManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DSCacheManager.m; sourceTree = "<group>"; };
 		382C7E6A1F9D93B3001F2AB9 /* ZhiBo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ZhiBo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		382C7E6E1F9D93B3001F2AB9 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		382C7E701F9D93B3001F2AB9 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
@@ -219,12 +225,16 @@
 				382C7E851F9D93F2001F2AB9 /* RootViewController.m */,
 				382C7EA01F9DA15F001F2AB9 /* PlayViewController.h */,
 				382C7EA11F9DA15F001F2AB9 /* PlayViewController.m */,
+				3819E3711FAC0E1A00799D21 /* ClearFullView.h */,
+				3819E3721FAC0E1A00799D21 /* ClearFullView.m */,
 				38FB05791FA03647007E2C95 /* FullPlayBottomView.h */,
 				38FB057A1FA03647007E2C95 /* FullPlayBottomView.m */,
 				3805299E1FA9C658005B8964 /* KongViewController.h */,
 				3805299F1FA9C658005B8964 /* KongViewController.m */,
 				38F0E3311FA8224100E0667E /* DragView.h */,
 				38F0E3321FA8224100E0667E /* DragView.m */,
+				3819E3741FAC5FB800799D21 /* DSCacheManager.h */,
+				3819E3751FAC5FB800799D21 /* DSCacheManager.m */,
 				38FB057C1FA06790007E2C95 /* SomeButtonView.h */,
 				38FB057D1FA06791007E2C95 /* SomeButtonView.m */,
 				38FE760E1F9EDA0400048726 /* RCDLive.h */,
@@ -540,6 +550,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				382C7EA21F9DA15F001F2AB9 /* PlayViewController.m in Sources */,
+				3819E3761FAC5FB800799D21 /* DSCacheManager.m in Sources */,
 				38FE76101F9EDA0400048726 /* RCDLive.m in Sources */,
 				38FE78CD1F9EDD9700048726 /* UCLOUDLivePlaying.m in Sources */,
 				38FE78E61F9EDE9E00048726 /* RCDLiveKitUtility.m in Sources */,
@@ -566,6 +577,7 @@
 				38FE791A1F9EF3BA00048726 /* AFHTTPRequestOperationManager.m in Sources */,
 				38FE791B1F9EF3BA00048726 /* AFHTTPSessionManager.m in Sources */,
 				38FE789C1F9EDBFB00048726 /* RCDLiveTextMessageCell.m in Sources */,
+				3819E3731FAC0E1A00799D21 /* ClearFullView.m in Sources */,
 				38FE789B1F9EDBFB00048726 /* RCDLiveMessageCell.m in Sources */,
 				38FE791F1F9EF3BA00048726 /* AFURLRequestSerialization.m in Sources */,
 				38FE79211F9EF3BA00048726 /* AFURLSessionManager.m in Sources */,

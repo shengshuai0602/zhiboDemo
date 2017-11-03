@@ -1,5 +1,6 @@
 PODS:
   - Bugly (2.4.2)
+  - HYBLoopScrollView (3.2.1)
   - IQKeyboardManager (4.0.7)
   - KYBarrageKit (0.0.6)
   - Masonry (1.0.2)
@@ -10,6 +11,7 @@ PODS:
 
 DEPENDENCIES:
   - Bugly
+  - HYBLoopScrollView
   - IQKeyboardManager
   - KYBarrageKit
   - Masonry (~> 1.0.2)
@@ -20,6 +22,7 @@ DEPENDENCIES:
 
 SPEC CHECKSUMS:
   Bugly: b09cd3c7e54048a0e079be88a7a99610f14eab8f
+  HYBLoopScrollView: 12ff9f5764cdd76f34171164c6517d5e01ee6766
   IQKeyboardManager: 69002bb4fea60596b710e57d426abc00e5063630
   KYBarrageKit: c2b6d97435620c3828a9786b44261f254fb9f977
   Masonry: 7c429b56da9d4ee0bbb3ed77a5ea710d6a5df39e
@@ -28,6 +31,6 @@ SPEC CHECKSUMS:
   RongCloudIMLib: f12607ef8e6d84e08e1411bed0fc4879383747b4
   SVProgressHUD: c404a55d78acbeb7ebb78b76d3faf986475a6994
 
-PODFILE CHECKSUM: e52dd2af4de70285463ddd97efef8a5e5ecb6751
+PODFILE CHECKSUM: f2500c475f441b32de2b82a357e04d9364b326e1
 
 COCOAPODS: 1.1.1

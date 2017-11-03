@@ -19,7 +19,7 @@
 #define PLUGIN_BOARD_ITEM_VOIP_TAG     1004
 #endif
 
-typedef void(^BACKBLOCK)(NSString *url);
+typedef void(^BACKBLOCK)(BOOL isBiliPlay,NSString *url);
 
 @interface PlayViewController : UIViewController<UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, UIGestureRecognizerDelegate, UIScrollViewDelegate>
 //点击返回时调用 在上一界面显示悬浮视频小窗
@@ -36,10 +36,6 @@ typedef void(^BACKBLOCK)(NSString *url);
  */
 @property(nonatomic, strong) NSString *targetId;
 
-/*!
- 屏幕方向
- */
-@property(nonatomic, assign) BOOL isScreenVertical;
 
 /*!
  播放内容地址
@@ -68,6 +64,9 @@ typedef void(^BACKBLOCK)(NSString *url);
 #pragma mark - 输入工具栏
 
 @property(nonatomic,strong) RCDLiveInputBar *inputBar;
+
+///横屏状态下的输入工具栏
+@property (nonatomic,strong) RCDLiveInputBar * acrossInputBar;
 
 #pragma mark - 显示设置
 /*!

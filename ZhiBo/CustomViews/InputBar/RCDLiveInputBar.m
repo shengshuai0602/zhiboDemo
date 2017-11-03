@@ -64,7 +64,7 @@
                                        initWithFrame:CGRectMake(0, 0,
                                                                 self.bounds.size.width,
                                                                 frame.size.height)];
-
+   
         _chatSessionInputBarControl.delegate = self;
         [self addSubview:_chatSessionInputBarControl];
         self.originalFrame = frame;

@@ -9,4 +9,5 @@ target 'ZhiBo' do
  pod 'RongCloudIMLib'
  pod 'IQKeyboardManager'
  pod 'KYBarrageKit'
+ pod "HYBLoopScrollView"
 end

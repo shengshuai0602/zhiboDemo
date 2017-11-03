@@ -8,7 +8,6 @@
 
 #import "PlayViewController.h"
 #import "RCDLiveKitCommonDefine.h"
-#import <MediaPlayer/MediaPlayer.h>
 #import <IJKMediaFramework/IJKMediaFramework.h>
 
 #import "RCDLiveMessageCell.h"
@@ -32,8 +31,9 @@
 //#import "LELivePlaying.h"
 //#import "QINIULivePlaying.h"
 //#import "QCLOUDLivePlaying.h"
-
+#import "ClearFullView.h"   //全屏状态透明手势视图
 #import <KYBarrageKit/KYBarrageKit.h>  //弹幕
+#import <IQKeyboardManager.h>
 
 #import "FullPlayBottomView.h"
 #import "SomeButtonView.h"
@@ -50,10 +50,6 @@
 UICollectionViewDelegate, UICollectionViewDataSource,
 UICollectionViewDelegateFlowLayout, RCDLiveMessageCellDelegate, UIGestureRecognizerDelegate,
 UIScrollViewDelegate, UINavigationControllerDelegate,RCTKInputBarControlDelegate,RCConnectionStatusChangeDelegate,UIAlertViewDelegate>
-{
-    CGPoint  _currentPoint;
-}
-
 
 @property (nonatomic,strong) UIView *playView;
 
@@ -142,17 +138,16 @@ UIScrollViewDelegate, UINavigationControllerDelegate,RCTKInputBarControlDelegate
 //全屏时下边的功能按钮
 @property  (nonatomic,strong) FullPlayBottomView *fullPlayBottomView;
 //全屏状态下透明全屏视图，在此视图上添加手势控制控制声音和屏幕亮度大小
-@property (nonatomic,strong) UIView *clearFullView;
-///控制声音亮度手势
-@property (nonatomic,strong) UIPanGestureRecognizer *panGR;
+@property (nonatomic,strong) ClearFullView *clearFullView;
 
-///控制音量的view
-@property (nonatomic,strong) MPVolumeView *volumeView;
 ///弹幕管理类
 @property (strong, nonatomic) KYBarrageManager *danmuManager;
-
+//是都开关弹幕
 @property (nonatomic,assign) BOOL danmuOpenOrNot;
-
+//是否暂停
+@property (nonatomic,assign) BOOL isBiliPlay;
+//是否是全屏播放
+@property (nonatomic,assign) BOOL isFullPlay;
 
 @end
 
@@ -171,13 +166,25 @@ static NSString *const RCDLiveTipMessageCellIndentifier = @"RCDLiveTipMessageCel
  */
 static NSString *const RCDLiveGiftMessageCellIndentifier = @"RCDLiveGiftMessageCellIndentifier";
 
-/*!
- 屏幕方向
- */
-//@property(nonatomic, assign) BOOL isScreenVertical;
 
 @implementation PlayViewController
 
+//设置状态栏样式z
+- (UIStatusBarStyle)preferredStatusBarStyle {
+        return UIStatusBarStyleDefault;
+
+}
+
+//设置是否隐藏状态栏
+- (BOOL)prefersStatusBarHidden {
+    //    [super prefersStatusBarHidden];
+    return NO;
+}
+
+//设置状态栏隐藏动画
+- (UIStatusBarAnimation)preferredStatusBarUpdateAnimation {
+    return UIStatusBarAnimationNone;
+}
 
 - (id)initWithCoder:(NSCoder *)aDecoder {
     self = [super initWithCoder:aDecoder];
@@ -249,6 +256,7 @@ static NSString *const RCDLiveGiftMessageCellIndentifier = @"RCDLiveGiftMessageC
 
 - (void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
+    [IQKeyboardManager sharedManager].enable = NO;    //禁用IQKeyboardManager
     [self.view addGestureRecognizer:_resetBottomTapGesture];
     [self.conversationMessageCollectionView reloadData];
     //准备播放 （哔哩哔哩）
@@ -257,6 +265,7 @@ static NSString *const RCDLiveGiftMessageCellIndentifier = @"RCDLiveGiftMessageC
 
 - (void)viewDidAppear:(BOOL)animated {
     [super viewDidAppear:animated];
+  
     self.navigationTitle = self.navigationItem.title;
 }
 
@@ -285,6 +294,7 @@ static NSString *const RCDLiveGiftMessageCellIndentifier = @"RCDLiveGiftMessageC
 
 - (void)viewDidDisappear:(BOOL)animated{
     [super viewDidDisappear:animated];
+      [IQKeyboardManager sharedManager].enable = YES;    //启用用IQKeyboardManager
     //销毁播放器
     [self.player shutdown];
 }
@@ -292,7 +302,10 @@ static NSString *const RCDLiveGiftMessageCellIndentifier = @"RCDLiveGiftMessageC
 - (void)viewDidLoad {
     [super viewDidLoad];
     self.view.backgroundColor = [UIColor whiteColor];
+
+    [IQKeyboardManager sharedManager].toolbarDoneBarButtonItemText = @"完成";
     _danmuOpenOrNot = YES;  //初始状态允许弹幕
+    _isBiliPlay = YES; //初始状态为自动播放
     //播放 哔哩哔哩
      [self addPlayerWithurl:self.playURL];
     //播放画面下边选择条
@@ -307,8 +320,22 @@ static NSString *const RCDLiveGiftMessageCellIndentifier = @"RCDLiveGiftMessageC
                                                  name:UIApplicationWillResignActiveNotification object:nil];
  //监听是否重新进入程序程序.
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(applicationDidBecomeActive:) name:UIApplicationDidBecomeActiveNotification object:nil];
+  //  回收：
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                                selector:@selector(keyboardWillHide:)
+                                                    name:UIKeyboardWillHideNotification
+                                                  object:nil];
 }
 
+- (void)keyboardWillHide:(NSNotification*)notification {
+    [self.inputBar setHidden:YES];
+    [self.acrossInputBar setHidden:YES];
+    
+}
+//移除通知
+- (void)dealloc{
+    [[NSNotificationCenter defaultCenter]removeObserver:self];
+}
 #pragma mark -- 初始化弹幕Manager
 - (void) allocDanmuManager{
     _danmuManager = [KYBarrageManager manager];
@@ -330,7 +357,7 @@ static NSString *const RCDLiveGiftMessageCellIndentifier = @"RCDLiveGiftMessageC
 
 #pragma mark -- 视频播放器
 - (void)addPlayerWithurl:(NSString *)url{
-    _playView  = [[UIView alloc]initWithFrame:CGRectMake(0, 64, [UIScreen mainScreen].bounds.size.width, 200)];
+    _playView  = [[UIView alloc]initWithFrame:CGRectMake(0, 20, [UIScreen mainScreen].bounds.size.width, 244)];
     [self.view addSubview:_playView];
     UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(tapView:)];
     [_playView addGestureRecognizer:tap];
@@ -353,6 +380,12 @@ static NSString *const RCDLiveGiftMessageCellIndentifier = @"RCDLiveGiftMessageC
     if (!_playBottomView) {
         _playBottomView = [[UIView alloc]initWithFrame:CGRectMake(0, 140, self.view.bounds.size.width, 60)];
         [_playView addSubview:_playBottomView];
+        [_playBottomView mas_makeConstraints:^(MASConstraintMaker *make) {
+            make.bottom.equalTo(_playView);
+            make.left.equalTo(_playView);
+            make.right.equalTo(_playView);
+            make.height.mas_equalTo(60);
+        }];
         _playBottomView.backgroundColor = [UIColor clearColor];
         UIButton *stopBtn = [[UIButton alloc]initWithFrame:CGRectMake(0, 10, 50, 30)];
         [_playBottomView addSubview:stopBtn];
@@ -367,23 +400,35 @@ static NSString *const RCDLiveGiftMessageCellIndentifier = @"RCDLiveGiftMessageC
         [fullBtn addTarget:self action:@selector(fullBtnDidClicked:) forControlEvents:UIControlEventTouchUpInside];
     }
 }
-
+//开始暂停
 - (void)stopBtnDidClicked:(UIButton *)sender{
-    if (!sender.selected) {
+    if (_isBiliPlay) {
         // 暂停播放
-    //    [_txlivePlayer pause];
         [self.player pause];
     }else{
         //恢复播放
-      //  [_txlivePlayer resume];
         [self.player play];
     }
     //改变状态
-    sender.selected = !sender.selected;
+    _isBiliPlay = !_isBiliPlay;
 }
 #pragma mark -- 全屏半屏转换
 - (void)fullBtnDidClicked:(UIButton *)sender{
-   
+    if (!_acrossInputBar) {
+#warning 唯一性
+        float inputBarOriginY = SCREEN_WIDTH - MinHeight_InputView;
+        float inputBarOriginX = 0;
+        float inputBarSizeWidth = SCREEN_HEIGHT;  //此时还没有翻转
+        float inputBarSizeHeight = MinHeight_InputView;
+
+        _acrossInputBar = [[RCDLiveInputBar alloc]initWithFrame:CGRectMake(inputBarOriginX, inputBarOriginY,inputBarSizeWidth,inputBarSizeHeight)];
+        _acrossInputBar.delegate = self;
+        _acrossInputBar.backgroundColor = [UIColor redColor];
+        _acrossInputBar.hidden = YES;
+        [ self.playView addSubview:_acrossInputBar];
+        [self.playView bringSubviewToFront:_acrossInputBar];
+
+    }
     //全屏绑定渲染区域
     [UIView animateWithDuration:0.5 animations:^{
       //  [_playView setTransform:CGAffineTransformMakeRotation(M_PI_2)];  //扭转90度
@@ -394,17 +439,13 @@ static NSString *const RCDLiveGiftMessageCellIndentifier = @"RCDLiveGiftMessageC
     //隐藏半屏时的暂停 全屏按钮
     _playBottomView.hidden = YES;
     [self.view bringSubviewToFront:_playView];
-    ///手势view全屏时添加，不全屏时移除
-    _clearFullView = [[UIView alloc]initWithFrame:_playView.bounds];
-    [self.player.view addSubview:_clearFullView];
-    
-    _clearFullView.backgroundColor = [UIColor clearColor];
+    ///手势view
+    if (!_clearFullView) {
+        _clearFullView = [[ClearFullView alloc]initWithFrame:_playView.bounds];
+        [self.playView addSubview:_clearFullView];
+    }
+  
     [_playView bringSubviewToFront:_fullPlayBottomView];
-    
-   //给控制音量，亮度的透明视图添加滑动手势
-    _panGR = [[UIPanGestureRecognizer alloc]initWithTarget:self action:@selector(panGestureRecognizerAction:)];
-    [_clearFullView addGestureRecognizer:_panGR];
-    _panGR.delegate = self;
     
     if (!_fullPlayBottomView) {
         //全屏状态下的下方控制按钮view
@@ -416,10 +457,9 @@ static NSString *const RCDLiveGiftMessageCellIndentifier = @"RCDLiveGiftMessageC
         
         ///播放画面变回小视图
         _fullPlayBottomView.halfBtnBlock = ^(){
-            [weakself.clearFullView removeFromSuperview];   //移除音量手势视图
             [UIView animateWithDuration:0.5 animations:^{
                [[UIDevice currentDevice] setValue:[NSNumber numberWithInteger:UIDeviceOrientationPortrait] forKey:@"orientation"];
-               weakself.playView.frame = CGRectMake(0, 64, [UIScreen mainScreen].bounds.size.width, 200);
+               weakself.playView.frame = CGRectMake(0, 20, [UIScreen mainScreen].bounds.size.width, 244);
             }];
             //延迟0.5 显示半屏时的功能按钮
             [weakself hiddenView:weakself.playBottomView YesOrNot:NO AfterTime:0.5];
@@ -429,32 +469,25 @@ static NSString *const RCDLiveGiftMessageCellIndentifier = @"RCDLiveGiftMessageC
         
         //全屏状态下暂停
         _fullPlayBottomView.stopBtnBlock = ^(BOOL isSelected) {
-            if (!isSelected) {
-                // 暂停播放
-            //   [weakself.txlivePlayer pause];
-                [weakself.player pause];
-            }else{
-                //恢复播放
-              //  [weakself.txlivePlayer resume];
-                [weakself.player play];
-            }
+            [weakself stopBtnDidClicked:nil];  //调用竖屏的按钮方法
         } ;
+        
         //弹幕开关点击
         _fullPlayBottomView.danmuBlock = ^(BOOL isSelected) {
             [weakself.danmuManager pauseScroll];
             _danmuOpenOrNot = isSelected;
             if (isSelected == YES) {
-                //开启
+                //开启只需要改变_danmuOpenOrNot 就可以开启弹幕
             }else{
-                //关闭
+                //关闭   立即消失
                 [weakself.danmuManager closeBarrage];
             }
         };
         
         //点击输入框弹起来键盘输入
         _fullPlayBottomView.inputBlock = ^{
-          //  [weakself showInputBar:nil];
-           // [weakself.inputBar setTransform:CGAffineTransformMakeRotation(M_PI_2)];
+             weakself.acrossInputBar.hidden = NO;
+             [weakself.acrossInputBar setInputBarStatus:RCDLiveBottomBarKeyboardStatus];
         };
     }else{
         //延迟0.5秒钟显示
@@ -470,56 +503,7 @@ static NSString *const RCDLiveGiftMessageCellIndentifier = @"RCDLiveGiftMessageC
     });
 
 }
-#pragma mark -- 全屏手势获取起始点坐标
--(void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event{
-    _currentPoint = [[touches anyObject] locationInView:_clearFullView];
-}
 
- ///全屏控制手势
-- (void)panGestureRecognizerAction:(UIPanGestureRecognizer *)sender{
-    ///手势在_clearFullView上
-    CGPoint velocity = [sender velocityInView:_clearFullView];  //拖动的速度
-    BOOL isVerticalGesture = fabs(velocity.x) < fabs(velocity.y);
-    if (isVerticalGesture) {
-        if (_currentPoint.x < _clearFullView.frame.size.width/2) {
-            //竖直方向移动
-            if (velocity.y > 0) {
-                //向下移动  亮度减小
-                [UIScreen mainScreen].brightness = [UIScreen mainScreen].brightness - 0.01;
-                NSLog(@"亮度减");
-            }else{
-                [UIScreen mainScreen].brightness = [UIScreen mainScreen].brightness + 0.01;
-                NSLog(@"亮度+");
-            }
-        }else{
-            if (!_volumeView) {
-                _volumeView = [[MPVolumeView alloc]initWithFrame:CGRectMake(100, 100, 100, 100)];
-                [_clearFullView addSubview:_volumeView];
-                _volumeView.hidden = YES;    //隐藏音量控制视图
-            }
-            if(velocity.y < 0){
-                NSLog(@"增大声音");
-                [self getVoumeViewSlider].value += 0.005;
-                // [MPMusicPlayerController applicationMusicPlayer].volume += 0.005;
-            }else{
-                NSLog(@"减少声音");
-                //  [MPMusicPlayerController applicationMusicPlayer].volume -= 0.005;
-                [self getVoumeViewSlider].value -= 0.005;
-            }
-        }
-    }
-}
-
-//获取音量控制视图的滑动控件
-- (UISlider *) getVoumeViewSlider{
-    for (UIView *view in [_volumeView subviews]){
-        if ([[view.class description] isEqualToString:@"MPVolumeSlider"]){
-           return (UISlider*)view;
-            break;
-        }
-    }
-    return nil;
-}
 
 //直播间聊天
 - (void)chat{
@@ -570,7 +554,6 @@ static NSString *const RCDLiveGiftMessageCellIndentifier = @"RCDLiveGiftMessageC
         self.contentView.backgroundColor = RCDLive_RGBCOLOR(235, 235, 235);
         self.contentView = [[UIView alloc]initWithFrame:contentViewFrame];
         [self.view addSubview:self.contentView];
-        
     }
     //聊天消息区
     if (nil == self.conversationMessageCollectionView) {
@@ -596,7 +579,7 @@ static NSString *const RCDLiveGiftMessageCellIndentifier = @"RCDLiveGiftMessageC
     }
     //输入区
     if(self.inputBar == nil){
-        float inputBarOriginY = self.conversationMessageCollectionView.bounds.size.height +30;
+        float inputBarOriginY = self.conversationMessageCollectionView.bounds.size.height +30;   //聊天列表下边
         float inputBarOriginX = self.conversationMessageCollectionView.frame.origin.x;
         float inputBarSizeWidth = self.contentView.frame.size.width;
         float inputBarSizeHeight = MinHeight_InputView;
@@ -613,7 +596,7 @@ static NSString *const RCDLiveGiftMessageCellIndentifier = @"RCDLiveGiftMessageC
     [self registerClass:[RCDLiveTipMessageCell class]forCellWithReuseIdentifier:RCDLiveTipMessageCellIndentifier];
     [self registerClass:[RCDLiveGiftMessageCell class]forCellWithReuseIdentifier:RCDLiveGiftMessageCellIndentifier];
  //融云默认播放器全半屏转换
-   // [self changeModel:YES];
+    // [self changeModel:YES];
     _resetBottomTapGesture =[[UITapGestureRecognizer alloc]
                              initWithTarget:self
                              action:@selector(tap4ResetDefaultBottomBarStatus:)];
@@ -694,8 +677,7 @@ static NSString *const RCDLiveGiftMessageCellIndentifier = @"RCDLiveGiftMessageC
     
     [self.portraitsCollectionView registerClass:[UICollectionViewCell class] forCellWithReuseIdentifier:@"cell"];
 }
-
-
+//弹出输入框
 -(void)showInputBar:(id)sender{
     self.inputBar.hidden = NO;
     [self.inputBar setInputBarStatus:RCDLiveBottomBarKeyboardStatus];
@@ -883,6 +865,7 @@ static NSString *const RCDLiveGiftMessageCellIndentifier = @"RCDLiveGiftMessageC
 /**
  *  更新底部新消息提示显示状态
  */
+
 - (void)updateUnreadMsgCountLabel{
     if (self.unreadNewMsgCount == 0) {
         self.unreadButtonView.hidden = YES;
@@ -1077,9 +1060,9 @@ static NSString *const RCDLiveGiftMessageCellIndentifier = @"RCDLiveGiftMessageC
 /**
  *   UICollectionView被选中时调用的方法
  *
- *  @return
  */
 - (void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath {
+    
 }
 
 #pragma mark -- 发送鲜花掌声
@@ -1122,8 +1105,10 @@ static NSString *const RCDLiveGiftMessageCellIndentifier = @"RCDLiveGiftMessageC
 #warning 本地输入发送弹幕
    // [self sendDanmaku:rcTextMessage.content];
     [self sendDanmuByManagerWithContent:rcTextMessage.content];
-    //    [self.inputBar setInputBarStatus:KBottomBarDefaultStatus];
-    //    [self.inputBar setHidden:YES];
+    [self.inputBar setInputBarStatus:RCDLiveBottomBarDefaultStatus];
+    [self.inputBar setHidden:YES];
+    [self.acrossInputBar setInputBarStatus:RCDLiveBottomBarDefaultStatus];
+    [self.acrossInputBar setHidden:YES];
 }
 
 //修复ios7下不断下拉加载历史消息偶尔崩溃的bug
@@ -1162,8 +1147,6 @@ static NSString *const RCDLiveGiftMessageCellIndentifier = @"RCDLiveGiftMessageC
 /**
  *  屏幕翻转
  *
- *  @param newCollection <#newCollection description#>
- *  @param coordinator   <#coordinator description#>
  */
 - (void)willTransitionToTraitCollection:(UITraitCollection *)newCollection withTransitionCoordinator:(id <UIViewControllerTransitionCoordinator>)coordinator{
     [super willTransitionToTraitCollection:newCollection
@@ -1171,11 +1154,11 @@ static NSString *const RCDLiveGiftMessageCellIndentifier = @"RCDLiveGiftMessageC
     [coordinator animateAlongsideTransition:^(id <UIViewControllerTransitionCoordinatorContext> context)
      {
          if (newCollection.verticalSizeClass == UIUserInterfaceSizeClassCompact) {
-             //To Do: modify something for compact vertical size
+             //To Do: modify something for compact vertical size   变横屏
              [self changeCrossOrVerticalscreen:NO];
          } else {
              [self changeCrossOrVerticalscreen:YES];
-             //To Do: modify something for other vertical size
+             //To Do: modify something for other vertical size   变竖屏
          }
          [self.view setNeedsLayout];
      } completion:nil];
@@ -1186,7 +1169,6 @@ static NSString *const RCDLiveGiftMessageCellIndentifier = @"RCDLiveGiftMessageC
  *  @param isVertical isVertical description
  */
 -(void)changeCrossOrVerticalscreen:(BOOL)isVertical{
-    _isScreenVertical = isVertical;
  
     float inputBarOriginY = self.conversationMessageCollectionView.bounds.size.height + 30;
     float inputBarOriginX = self.conversationMessageCollectionView.frame.origin.x;
@@ -1295,7 +1277,7 @@ static NSString *const RCDLiveGiftMessageCellIndentifier = @"RCDLiveGiftMessageC
 /**
  *  未读消息View
  *
- *  @return <#return value description#>
+
  */
 - (UIView *)unreadButtonView {
     if (!_unreadButtonView) {
@@ -1345,7 +1327,7 @@ static NSString *const RCDLiveGiftMessageCellIndentifier = @"RCDLiveGiftMessageC
                                                 dispatch_async(dispatch_get_main_queue(), ^{
                                                     //将聊天室链接传出
                                                     if (self.backBlock) {
-                                                        self.backBlock(_playURL);
+                                                        self.backBlock(_isBiliPlay,_playURL);
                                                     }
                                                     [self.navigationController popViewControllerAnimated:YES];
                                                 });
@@ -1409,7 +1391,6 @@ static NSString *const RCDLiveGiftMessageCellIndentifier = @"RCDLiveGiftMessageC
 }
 
 
-
 - (void)tap4ResetDefaultBottomBarStatus:
 (UIGestureRecognizer *)gestureRecognizer {
     if (gestureRecognizer.state == UIGestureRecognizerStateEnded) {
@@ -1421,27 +1402,26 @@ static NSString *const RCDLiveGiftMessageCellIndentifier = @"RCDLiveGiftMessageC
 
 //第二步实现2个NSNotificationCenter所触发的事件方法
 
-- (void)applicationWillResignActive:(NSNotification *)notification
-
-{
+- (void)applicationWillResignActive:(NSNotification *)notification{
     
     printf("按理说是触发home按下\n");
-    [[UIDevice currentDevice] setValue:[NSNumber numberWithInteger:UIDeviceOrientationPortrait] forKey:@"orientation"];
-    [self.clearFullView removeFromSuperview];   //移除音量手势视图
- 
-    self.playView.frame = CGRectMake(0, 64, [UIScreen mainScreen].bounds.size.width, 200);
- 
-    //延迟0.5 显示半屏时的功能按钮
-    [self hiddenView:self.playBottomView YesOrNot:NO AfterTime:0.5];
-    self.fullPlayBottomView.hidden = YES;
-    [self.view sendSubviewToBack:self.playView];
-
+    if ([[UIDevice currentDevice] orientation] == UIDeviceOrientationPortrait || [[UIDevice currentDevice] orientation] == UIDeviceOrientationPortraitUpsideDown) {
+        _isFullPlay = NO;
+    } else if ([[UIDevice currentDevice] orientation] == UIDeviceOrientationLandscapeLeft || [[UIDevice currentDevice] orientation] == UIDeviceOrientationLandscapeRight) {
+        _isFullPlay = YES;
+    }
 }
 
-- (void)applicationDidBecomeActive:(NSNotification *)notification
-{
-    printf("按理说是重新进来后响应\n");
+- (void)applicationDidBecomeActive:(NSNotification *)notification{
     
+    printf("按理说是重新进来后响应\n");
+  if (_isFullPlay) {
+        [[UIDevice currentDevice] setValue:[NSNumber numberWithInteger:UIDeviceOrientationLandscapeLeft] forKey:@"orientation"];
+        _playView.frame = [UIScreen mainScreen].bounds;
+  }else{
+      [[UIDevice currentDevice] setValue:[NSNumber numberWithInteger:UIDeviceOrientationPortrait] forKey:@"orientation"];
+      _playView.frame = CGRectMake(0, 20, SCREEN_WIDTH, 244);
+  }
 }
 
 - (void)didReceiveMemoryWarning {

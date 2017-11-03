@@ -28,13 +28,22 @@
         }];
         
         //输入框
-        UITextField *textField = [[UITextField alloc]init];
-        [self addSubview:textField];
-        textField.layer.borderColor = [UIColor whiteColor].CGColor;
-        textField.layer.borderWidth = 1.0f;
-        textField.layer.masksToBounds = YES;
-        textField.layer.cornerRadius = 8;
-        [textField mas_makeConstraints:^(MASConstraintMaker *make) {
+//        UITextField *textField = [[UITextField alloc]init];
+//        [self addSubview:textField];
+//       // textField.inputAccessoryView = [[UIView alloc] init];
+//        textField.layer.borderColor = [UIColor whiteColor].CGColor;
+//        textField.layer.borderWidth = 1.0f;
+//        textField.layer.masksToBounds = YES;
+//        textField.layer.cornerRadius = 8;
+        UIButton *button = [[UIButton alloc]init];
+        button.layer.borderColor = [UIColor whiteColor].CGColor;
+        button.layer.borderWidth = 1.0f;
+        button.layer.masksToBounds = YES;
+        button.layer.cornerRadius = 8;
+        [self addSubview:button];
+        
+        [button addTarget:self action:@selector(inputBtnDidClicked:) forControlEvents:UIControlEventTouchUpInside];
+        [button mas_makeConstraints:^(MASConstraintMaker *make) {
             make.center.equalTo(self);
             make.size.mas_equalTo(CGSizeMake(300, 40));
         }];
@@ -78,11 +87,11 @@
 }
 
 ////输入框点击
-//- (void)inputBtnDidClicked:(UIButton  *)sender{
-//    if (self.inputBlock) {
-//        self.inputBlock();
-//    }
-//}
+- (void)inputBtnDidClicked:(UIButton  *)sender{
+    if (self.inputBlock) {
+        self.inputBlock();
+    }
+}
 //半瓶按钮
 - (void)halfBtnDidclicked:(UIButton *)sender{
     if (self.halfBtnBlock) {
